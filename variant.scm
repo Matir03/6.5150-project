@@ -3,17 +3,23 @@
     initializer ; () => State
     reducer     ; (State Action) => State | #f ; (if the action fails)
     ; renderer    ; (State) => renders state
+    action-generator ; (State => list moves)
+    state-score-calculator ; (State => score)
     metadata)   ; arbitrary association list
   variant?
   (initializer get-initializer)
   (reducer get-reducer)
   ; (renderer get-renderer)
+  (action-generator get-action-generator)
+  (state-score-calculator get-state-score-calculator)
   (metadata get-metadata))
 
 (define the-null-variant
   (make-variant
     (lambda () (make-eq-hash-table))
     (lambda (state action) #f)
+    (lambda (state) '())
+    (lambda (state) 0)
     ; (lambda (state)
     ;   (begin
     ;     (display state)
@@ -49,8 +55,10 @@
 (define (apply-modifier modifier variant)
   (let ((initializer (get-initializer variant))
         (reducer (get-reducer variant))
+	(action-generator (get-action-generator variant))
+	(state-score (get-state-score-calculator variant))
         (metadata (get-metadata variant)))
-    (modifier initializer reducer metadata)))
+    (modifier initializer reducer action-generator state-score-calculator metadata)))
 
 (define (build-variant . modifiers)
   (build-variant* modifiers))
