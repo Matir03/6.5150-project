@@ -16,8 +16,8 @@
 	 (possible-actions (action-generator state))
 	 (possible-states (map (lamdba (action) (reducer state action))
 			       possible-actions))
-	 (possible-actions-states (map cons possible-actions possible-states)))j
-	 (filter cadr possible-actions-states)))
+	 (possible-actions-states (map cons possible-actions possible-states)))
+    (filter cadr possible-actions-states)))
 
 (define (max-with-inf-and-values a b)
   (if (eq? (cadr a) '-inf)
