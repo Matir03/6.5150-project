@@ -39,7 +39,7 @@
 				    (cons (car action-state) value))
 				  possible-actions-states values)))
 	(if (pair? possible-actions-states)
-	    (fold-right max-with-inv-and-values '('test '-inf) actions-values)
+	    (car (fold-right max-with-inv-and-values '('test '-inf) actions-values))
 	    (error "No moves can be made"))))
 
 (define (get-score variant state)
