@@ -25,6 +25,9 @@
       (if (> (cadr a) (cadr b))
 	  a
 	  b)))
+
+(define (get-best-move variant state)
+  (get-best-move-min-max variant state 3))
   
 (define (get-best-move-min-max variant state depth)
   (if (< depth 1)
@@ -59,6 +62,23 @@
 	   
 ;; Return just the score of the move given state
 (define (get-score-min-max-internal variant state depth maximizing-player)
+  ;; First step is to generate all the legal moves
+  (if (= depth 0)
+      (get-score variant state)
+      (let ((possible-states (generate-states variant state)))
+	(if (pair? possible-states)
+	    (case maximizing-player
+	      (#t (fold-right max-with-inf '-inf
+			      (map (lambda (new-state) (get-score-min-max-internal
+							variant new-state (- depth 1) #f))
+				   possible-states)))
+	      (#f (fold-right min-with-inf 'inf
+			      (map (lambda (new-state) (get-score-min-max-internal
+							variant new-state (- depth 1) #t))
+				   possible-states))))
+	    (get-score variant state)))))
+
+(define (get-score-alpha-beta-internal variant state depth alpha beta maximizing-player)
   ;; First step is to generate all the legal moves
   (if (= depth 0)
       (get-score variant state)
