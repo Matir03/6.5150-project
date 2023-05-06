@@ -49,13 +49,13 @@
                   (lambda (turn)
                     (list (mod (+ turn 1) n)))))
               (num-players . ,n)
-              . ,metadata))))
+              . ,metadata)))
       (make-variant
         new-initializer
         reducer
         generator
         scorer
-        new-metadata)))
+        new-metadata))))
 
 (define (get-player state)
   (error "Not yet implemented"))
@@ -66,24 +66,20 @@
 	   (lambda (state action)
 	     ;; If the next player is a bot, then only accept the move bot-move and actually perform a bot move.
 	     ;; Can only be applied with a players n variant
-	     (case (get-player state)
-	       ((which-players)
-		(if (eq? action 'bot-move)
-		    (reducer state (get-best-move (make-variant initializer reducer generator scorer metadata) state))
-		    #f))
-	       (else (reducer state action)))))
-	  (new-generator (lambda (state)
-			   (cons 'bot-move (generator state))))
+	     (cond ((memq (get-player state) which-players)
+		    (if (eq? action 'bot-move)
+			(reducer state (get-best-move (make-variant initializer reducer generator scorer metadata) state))
+			(reducer state action)))
+		   (else (reducer state action)))))
           (new-metadata
             `((bot . ,which-players)
-              (num-players . ,n)
               . ,metadata)))
       (make-variant
-        new-initializer
-        reducer
-        generator
+        initializer
+        new-reducer
+	generator ;; We do not edit the generator since we don't want bot-moves to show up
         scorer
-        new-metadata)))
+        new-metadata))))
 
 (define (nim-stack initializer reducer generator scorer metadata)
   (let ((new-reducer
