@@ -1,4 +1,6 @@
 (load "./variant.scm")
+(define (copy-hash-table hash-table)
+  (alist->hash-table (hash-table->alist hash-table)))
 
 (define (add-to-all func alist)
   (lambda args
@@ -14,7 +16,7 @@
     (define values
       (map
         (lambda (key)
-          (hash-table-ref table key))
+          (hash-table-ref table key)) ;; Should this be state instead of table?
         keys))
     (define new-values
       (apply func values))
