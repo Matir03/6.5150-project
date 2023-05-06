@@ -43,7 +43,7 @@
 				    (cons (car action-state) score))
 				  possible-actions-states scores)))
 	(if (pair? possible-actions-states)
-	    (car (fold-right max-with-inv-and-values '('test '-inf) actions-values))
+	    (car (fold-right max-with-inf-and-values '('test '-inf) actions-values))
 	    (error "No moves can be made")))))
 
 (define (get-score-multiplayer-internal variant state depth)
@@ -67,7 +67,7 @@
 				    (cons (car action-state) score))
 				  possible-actions-states scores)))
 	(if (pair? possible-actions-states)
-	    (car (fold-right max-with-inv-and-values '('test '-inf) actions-values))
+	    (car (fold-right max-with-inf-and-values '('test '-inf) actions-values))
 	    (error "No moves can be made")))))
 
 (define (get-score variant state)
