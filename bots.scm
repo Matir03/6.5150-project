@@ -1,19 +1,22 @@
 (load "./variant.scm")
 
+(define (copy-hash-table hash-table)
+  (alist->hash-table (hash-table->alist hash-table)))
+
 ; Returns a list of (state . move)
 (define (generate-states variant state)
-  (let* ((action-generator (get-action-generator variant))
+  (let* ((generator (get-generator variant))
 	 (reducer (get-reducer variant))
-	 (possible-actions (action-generator state))
-	 (possible-states (map (lambda (action) (reducer state action))
+	 (possible-actions (generator state))
+	 (possible-states (map (lambda (action) (reducer (copy-hash-table state) action))
 			       possible-actions)))
     (filter values possible-states))) ; Values is an identity funtion to remove states which are #f
 
 (define (generate-moves-and-states variant state)
-  (let* ((action-generator (get-action-generator variant))
+  (let* ((action-generator (get-generator variant))
 	 (reducer (get-reducer variant))
 	 (possible-actions (action-generator state))
-	 (possible-states (map (lambda (action) (reducer state action))
+	 (possible-states (map (lambda (action) (reducer (copy-hash-table state) action))
 			       possible-actions))
 	 (possible-actions-states (map cons possible-actions possible-states)))
     (filter cadr possible-actions-states))) ; Filter out states which are #f

@@ -1,6 +1,4 @@
 (load "./variant.scm")
-(define (copy-hash-table hash-table)
-  (alist->hash-table (hash-table->alist hash-table)))
 
 (define (add-to-all func alist)
   (lambda args
