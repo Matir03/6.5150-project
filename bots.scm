@@ -7,7 +7,7 @@
 	 (possible-actions (action-generator state))
 	 (possible-states (map (lambda (action) (reducer state action))
 			       possible-actions)))
-    (filter values possible-states))) ; Values is an identity funtiono
+    (filter values possible-states))) ; Values is an identity funtion to remove states which are #f
 
 (define (generate-moves-and-states variant state)
   (let* ((action-generator (get-action-generator variant))
@@ -16,7 +16,7 @@
 	 (possible-states (map (lambda (action) (reducer state action))
 			       possible-actions))
 	 (possible-actions-states (map cons possible-actions possible-states)))
-    (filter cadr possible-actions-states)))
+    (filter cadr possible-actions-states))) ; Filter out states which are #f
 
 (define (max-with-inf-and-values a b)
   (if (eq? (cadr a) '-inf)
@@ -26,20 +26,46 @@
 	  b)))
 
 (define (get-best-move variant state)
-  (get-best-move-min-max variant state 3))
+  (get-best-move-multiplayer variant state (get-player-count variant)))
+
+;;  (get-best-move-min-max variant state 3))
+
+(define (get-best-move-multiplayer variant state depth)
+  (if (< depth 1)
+      (error "cannot get a best move with depth < 1")
+      (let* ((possible-actions-states (generate-moves-and-states variant state))
+	     (scores (map (lambda (action-state-pair)
+			    (get-score-multiplayer-internal variant
+					       (cadr action-state-pair)
+					       (- depth 1)))
+			  possible-actions-states))
+	     (actions-values (map (lambda (action-state score)
+				    (cons (car action-state) score))
+				  possible-actions-states scores)))
+	(if (pair? possible-actions-states)
+	    (car (fold-right max-with-inv-and-values '('test '-inf) actions-values))
+	    (error "No moves can be made")))))
+
+(define (get-score-multiplayer-internal variant state depth)
+  (if (= depth 0)
+      (get-score variant state)
+      (let (possible-states (generate-states variant state))
+	(min (map (lambda (possible-state)
+		    (get-score-multiplayer-internal variant possible-state (- depth 1)))
+		  possible-states)))))
 
 (define (get-best-move-min-max variant state depth)
   (if (< depth 1)
       (error "cannot get a best move with depth < 1")
       (let* ((possible-actions-states (generate-moves-and-states variant state))
-	     (values (map (lambda (action-state-pair)
-			    (get-score-min-max variant
+	     (scores (map (lambda (action-state-pair)
+			    (get-score-min-max-internal variant
 					       (cadr action-state-pair)
 					       (- depth 1) #f))
 			  possible-actions-states))
-	     (actions-values (map (lambda (action-state value)
-				    (cons (car action-state) value))
-				  possible-actions-states values)))
+	     (actions-values (map (lambda (action-state score)
+				    (cons (car action-state) score))
+				  possible-actions-states scores)))
 	(if (pair? possible-actions-states)
 	    (car (fold-right max-with-inv-and-values '('test '-inf) actions-values))
 	    (error "No moves can be made")))))
