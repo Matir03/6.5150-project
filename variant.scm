@@ -4,7 +4,7 @@
     reducer     ; (Action) => ((State) => State) | #f ; (if the action fails)
     ; renderer    ; (State) => renders state
     generator ; (State) => list Action
-    scorer ; (State) => score
+    scorer ; (State, action, is current turn) => score
     metadata)   ; arbitrary association list
   variant?
   (initializer get-initializer)

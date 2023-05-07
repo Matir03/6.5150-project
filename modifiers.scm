@@ -14,7 +14,7 @@
     (define values
       (map
         (lambda (key)
-          (hash-table-ref table key)) ;; Should this be state instead of table?
+          (hash-table-ref state key)) ;; Should this be state instead of table?
         keys))
     (define new-values
       (apply func values))
@@ -97,12 +97,17 @@
           (lambda (state)
             (map
               (lambda (n) (list 'take n))
-              (iota (+ (hash-table-ref state 'stack-size) 1)))))
+              (iota (+ (hash-table-ref state 'stack-size) 1))))) 
+	(new-scorer (lambda (state action is-maximizing-player) ;; Since the goal for a single stack is to take the last object i.e. shrink the stack size, then I suppose the score should be - of the stack length
+		      (if (eq? state '())
+			  (if is-maximizing-player 'inf '-inf)
+			  (- (hash-table-ref state 'stack-size)))))
+		      
     (make-variant
       initializer
       new-reducer
       new-generator
-      scorer
+      new-scorer
       metadata))))
 
 (define (finite-game-sum initializer reducer generator scorer metadata)
