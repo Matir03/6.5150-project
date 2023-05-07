@@ -60,7 +60,7 @@
 
 (define (get-player state)
   (hash-table-ref state 'turn))
-(define (get-player-count state)
+(define (get-player-count state) 2)
 
 (define (bot . which-players)
   (lambda (initializer reducer generator scorer metadata)
