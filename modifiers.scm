@@ -1,4 +1,5 @@
 (load "./variant.scm")
+(load "./bots.scm")
 
 (define (add-to-all func alist)
   (lambda args
@@ -59,6 +60,7 @@
 
 (define (get-player state)
   (hash-table-ref state 'turn))
+(define (get-player-count state)
 
 (define (bot . which-players)
   (lambda (initializer reducer generator scorer metadata)

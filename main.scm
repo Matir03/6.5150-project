@@ -31,7 +31,7 @@
 (define (simple-stack initializer reducer generator scorer metadata)
   (let ((new-initializer (lambda () (let ((state (initializer))) (hash-table-set! state 'stack-size 10) state)))
 	(new-reducer (lambda (state action) (hash-table-set! state 'stack-size (cadr action)) state))
-        (new-generator (lambda (state) (map (lambda (n) (cons 'turn n)) (iota (hash-table-ref state 'stack-size)))))
+        (new-generator (lambda (state) (map (lambda (n) (list 'turn n)) (iota (hash-table-ref state 'stack-size)))))
 	(new-scorer (lambda (state action is-maximizing-player) ;; Since the goal for a single stack is to take the last object i.e. shrink the stack size, then I suppose the score should be - of the stack length
 		      (if (eq? state '())
 			  (if is-maximizing-player 'inf '-inf)
@@ -47,5 +47,7 @@
 (define simple-variant
   (build-variant
    (players 2)
-   simple-stack))
+
+   simple-stack
+   (bot 0)))
    

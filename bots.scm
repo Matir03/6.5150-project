@@ -1,6 +1,7 @@
 (load "./variant.scm")
 
 (define (copy-hash-table hash-table)
+  ;;hash-table)
   (alist->hash-table (hash-table->alist hash-table)))
 
 ; Returns a list of (state . move)
@@ -18,15 +19,16 @@
 	 (possible-actions (action-generator state))
 	 (possible-states (map (lambda (action) (reducer (copy-hash-table state) action))
 			       possible-actions))
-	 (possible-actions-states (map cons possible-actions possible-states)))
+	 (possible-actions-states (map list possible-actions possible-states)))
     (filter cadr possible-actions-states))) ; Filter out states which are #f
 
 (define (max-with-inf-and-values a b)
-  (if (eq? (cadr a) '-inf)
-      b
-      (if (> (cadr a) (cadr b))
-	  a
-	  b)))
+  (cond ((eq? (cadr a) '-inf) b)
+	((eq? (cadr a) 'inf) a)
+	((eq? (cadr b) '-inf) a)
+	((eq? (cadr b) 'inf) b)
+	(else (if (> (cadr a) (cadr b)) a b))))
+
 (define (get-player-count x) 2)
 
 ;;  (get-best-move-min-max variant state 3))
@@ -38,8 +40,8 @@
 	  (reduce (if is-maximizing-player max-with-inf min-with-inf)
 		  (get-score variant '() action is-maximizing-player)
 		  (map (lambda (possible-action-state)
-			(get-score-multiplayer-internal variant (cadr possible-state) (car possible-state) (- depth 1)))
-		    possible-states))))))
+			(get-score-multiplayer-internal variant (cadr possible-action-state) (car possible-action-state) (- depth 1) maximizing-player))
+		    possible-action-states))))))
 
 (define (get-best-move-multiplayer variant state depth)
   (if (< depth 1)
@@ -53,23 +55,24 @@
 					       (get-player (cadr action-state-pair))))
 			  possible-actions-states))
 	     (actions-values (map (lambda (action-state score)
-				    (cons (car action-state) score))
+				    (list (car action-state) score))
 				  possible-actions-states scores)))
 	(if (pair? possible-actions-states)
 	    (car (reduce max-with-inf-and-values '(test -inf) actions-values))
 	    (error "No moves can be made")))))
 
-(define (is-maximizing-player? player state)
+ (is-maximizing-player? player state)
   (eq? (get-player state) player))
 
 		
 (define (get-best-move variant state)
+  (pp "Getting best move")
   (get-best-move-multiplayer variant state (get-player-count variant)))
 
 
-(define (get-score variant state)
-  (let* ((score-getter (state-score-calculator variant)))
-    (score-getter state)))
+(define (get-score variant state action is-maximizing-player)
+  (let* ((score-getter (get-scorer variant)))
+    (score-getter state action is-maximizing-player)))
 
 (define (max-with-inf a b)
   (cond ((eq? a '-inf) b)
