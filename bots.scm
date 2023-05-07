@@ -42,7 +42,7 @@
 					       (cadr action-state-pair)
 					       (car action-state-pair)
 					       (- depth 1)
-					       (get-player state)))
+					       (get-player (cadr action-state-pair))))
 			  possible-actions-states))
 	     (actions-values (map (lambda (action-state score)
 				    (cons (car action-state) score))
