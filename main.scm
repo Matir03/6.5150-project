@@ -18,8 +18,8 @@
 
 (define nim
   (build-variant
-    nim-stack
     (players 2)
+    nim-stack
     finite-game-sum
     (initialize-nim-game '(3 4 5 6))))
 

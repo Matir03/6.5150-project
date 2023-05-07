@@ -116,7 +116,6 @@
                     ((base-reducer action)
                      (alist-set 'turn ((meta-ref metadata 'get-turn) state)
                        (alist-ref game-name state)))))
-
               (and game-state
                 (alist-set
                   game-name
@@ -150,7 +149,7 @@
 (define (initialize-nim-game initial-stacks)
   (initialize-to
     (append
-      '((num-games . 4)
+      `((num-games . ,(length initial-stacks))
         (turn . 0))
       (map
         (lambda (stack-size index)

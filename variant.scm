@@ -3,7 +3,6 @@
     make-initializer ; (metadata) => () => state
     make-reducer     ; (metadata) => (action) => (state) => state | #f ; (if the action fails)
     make-generator   ; (metadata) => (state) => list action
-    ; make-renderer  ; (metadata) => (state) => renders state
     make-scorer      ; (metadata) => (state) => score
     metadata)   ; arbitrary hash table
   ; state is an association list
@@ -11,7 +10,6 @@
   variant?
   (make-initializer initializer-maker)
   (make-reducer reducer-maker)
-  ; (renderer renderer-maker)
   (make-generator generator-maker)
   (make-scorer scorer-maker)
   (metadata get-metadata))
