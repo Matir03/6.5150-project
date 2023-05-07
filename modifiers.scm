@@ -2,7 +2,7 @@
 
 (define (add-to-all func alist)
   (lambda args
-    (let (table (apply func args))
+    (let ((table (apply func args)))
       (for-each
         (lambda (pair)
           (hash-table-set! table (car pair) (cdr pair)))
@@ -58,7 +58,7 @@
         new-metadata))))
 
 (define (get-player state)
-  (error "Not yet implemented"))
+  (hash-table-ref state 'turn))
 
 (define (bot . which-players)
   (lambda (initializer reducer generator scorer metadata)
@@ -101,14 +101,14 @@
 	(new-scorer (lambda (state action is-maximizing-player) ;; Since the goal for a single stack is to take the last object i.e. shrink the stack size, then I suppose the score should be - of the stack length
 		      (if (eq? state '())
 			  (if is-maximizing-player 'inf '-inf)
-			  (- (hash-table-ref state 'stack-size)))))
-		      
+			  (- (hash-table-ref state 'stack-size))))))
     (make-variant
       initializer
       new-reducer
       new-generator
       new-scorer
-      metadata))))
+      metadata)))
+#|
 
 (define (finite-game-sum initializer reducer generator scorer metadata)
   (define (new-initializer)
@@ -129,3 +129,5 @@
         (lambda (index)
           (generator (hash-table-ref table (+ 'game index))))
         (iota num-games)))))
+
+|#

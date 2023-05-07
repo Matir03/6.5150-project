@@ -27,11 +27,19 @@
       (if (> (cadr a) (cadr b))
 	  a
 	  b)))
-
-(define (get-best-move variant state)
-  (get-best-move-multiplayer variant state (get-player-count variant)))
+(define (get-player-count x) 2)
 
 ;;  (get-best-move-min-max variant state 3))
+(define (get-score-multiplayer-internal variant state action depth maximizing-player)
+  (let ((is-maximizing-player (is-maximizing-player? maximizing-player state)))
+    (if (= depth 0)
+	(get-score variant state action is-maximizing-player)
+	(let ((possible-action-states (generate-moves-and-states variant state)))
+	  (reduce (if is-maximizing-player max-with-inf min-with-inf)
+		  (get-score variant '() action is-maximizing-player)
+		  (map (lambda (possible-action-state)
+			(get-score-multiplayer-internal variant (cadr possible-state) (car possible-state) (- depth 1)))
+		    possible-states))))))
 
 (define (get-best-move-multiplayer variant state depth)
   (if (< depth 1)
@@ -52,19 +60,11 @@
 	    (error "No moves can be made")))))
 
 (define (is-maximizing-player? player state)
-  (eq? (get-player state) player)
+  (eq? (get-player state) player))
 
-(define (get-score-multiplayer-internal variant state action depth maximizing-player)
-  (let ((is-maximizing-player (is-maximizing-player? maximizing-player state)))
-    (if (= depth 0)
-	(get-score variant state action is-maximizing-player)
-	(let ((possible-action-states (generate-moves-and-states variant state)))
-	  (reduce (if is-maximizing-player max-with-inf min-with-inf)
-		  (get-score variant '() action is-maximizing-player)
-		  (map (lambda (possible-action-state)
-			(get-score-multiplayer-internal variant (cadr possible-state) (car possible-state) (- depth 1)))
-		    possible-states))))))
 		
+(define (get-best-move variant state)
+  (get-best-move-multiplayer variant state (get-player-count variant)))
 
 
 (define (get-score variant state)
