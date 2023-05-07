@@ -1,5 +1,4 @@
 (load "./modifiers.scm")
-; (load "./variant.scm")
 
 (define (ended? state)
   (assq 'ended state))
