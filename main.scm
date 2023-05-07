@@ -51,3 +51,9 @@
    simple-stack
    (bot 0)))
    
+(define simple-variant
+  (build-variant
+   (players 2)
+
+   simple-stack
+   (adaptive-bot (list 0) 1)))

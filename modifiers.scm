@@ -62,6 +62,38 @@
   (hash-table-ref state 'turn))
 (define (get-player-count state) 2)
 
+(define (adaptive-bot which-bots which-player) ; Bot which learns which moves depending on which player to watch
+  (lambda (initializer reducer generator scorer metadata)
+    (let ((new-initializer (lambda () (let ((state (initializer))) (hash-table-set! state 'bot-strength 2) state)))
+	  (new-reducer
+	   (lambda (state action)
+	     ;; If the next player is a bot, then only accept the move bot-move and actually perform a bot move.
+	     ;; Can only be applied with a players n variant
+	     (let ((player (get-player state)))
+		(cond ((memq player which-bots)
+			(if (eq? action 'bot-move)
+			    (reducer state (get-nth-best-move (make-variant initializer reducer generator scorer metadata) state
+							      (hash-table-ref state 'bot-strength)))
+			    (reducer state action)))
+		      ((eq? player which-player)
+			    
+		       (hash-table-set! state 'bot-strength
+					(get-which-move
+					 (make-variant initializer reducer generator scorer metadata)
+					 state
+					 action))
+		       (reducer state action))
+		    (else (reducer state action))))))
+          (new-metadata
+            `((adaptive-bot . ,which-player)
+              . ,metadata)))
+      (make-variant
+        new-initializer
+        new-reducer
+	generator ;; We do not edit the generator since we don't want bot-moves to show up
+        scorer
+        new-metadata))))
+
 (define (bot . which-players)
   (lambda (initializer reducer generator scorer metadata)
     (let ((new-reducer

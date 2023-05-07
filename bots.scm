@@ -43,7 +43,8 @@
 			(get-score-multiplayer-internal variant (cadr possible-action-state) (car possible-action-state) (- depth 1) maximizing-player))
 		    possible-action-states))))))
 
-(define (get-best-move-multiplayer variant state depth)
+
+(define (get-move-pairs variant state depth)
   (if (< depth 1)
       (error "cannot get a best move with depth < 1")
       (let* ((possible-actions-states (generate-moves-and-states variant state))
@@ -57,18 +58,42 @@
 	     (actions-values (map (lambda (action-state score)
 				    (list (car action-state) score))
 				  possible-actions-states scores)))
-	(if (pair? possible-actions-states)
-	    (car (reduce max-with-inf-and-values '(test -inf) actions-values))
-	    (error "No moves can be made")))))
+	actions-values)))
 
- (is-maximizing-player? player state)
-  (eq? (get-player state) player))
+(define (sort-action-values action-values)
+  (sort action-values (lambda (a b)
+			(cond ((eq? (cadr a) 'inf) #t)
+				((eq? (cadr a) '-inf) #f)
+				((eq? (cadr b) '-inf) #t)
+				((eq? (cadr b) 'inf) #f)
+				(else (> (cadr a) (cadr b)))))))
 
+(define (get-which-move variant state action)
+  (let* ((actions-values (sort-action-values (get-move-pairs variant state (get-player-count variant))))
+	 (actions (map car actions-values)))
+    (- (length actions) (length (memq action actions)))))
+
+
+(define (get-best-move-multiplayer variant state depth)
+  (let ((actions-values (get-move-pairs variant state depth)))
+    (if (pair? actions-values)
+	(car (reduce max-with-inf-and-values '(test -inf) actions-values))
+	(error "No moves can be made"))))
+
+(define (get-nth-best-move-multiplayer variant state depth n)
+  (let* ((actions-values (sort-action-values (get-move-pairs variant state (get-player-count variant))))
+	 (actions (map car actions-values)))
+    (if (<= (length actions) n)
+	(list-ref actions 0)
+	(list-ref actions n))))
 		
 (define (get-best-move variant state)
   (pp "Getting best move")
   (get-best-move-multiplayer variant state (get-player-count variant)))
 
+(define (get-nth-best-move variant state n)
+  (pp "Getting nth best move")
+  (get-nth-best-move-multiplayer variant state (get-player-count variant) n))
 
 (define (get-score variant state action is-maximizing-player)
   (let* ((score-getter (get-scorer variant)))
