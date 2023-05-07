@@ -1,38 +1,44 @@
 (define-record-type <variant>
   (make-variant
-    initializer ; () => State
-    reducer     ; (Action) => ((State) => State) | #f ; (if the action fails)
-    ; renderer    ; (State) => renders state
-    generator ; (State) => list Action
-    scorer ; (State) => score
-    metadata)   ; arbitrary association list
+    make-initializer ; (metadata) => () => state
+    make-reducer     ; (metadata) => (action) => (state) => state | #f ; (if the action fails)
+    make-generator   ; (metadata) => (state) => list action
+    ; make-renderer  ; (metadata) => (state) => renders state
+    make-scorer      ; (metadata) => (state) => score
+    metadata)   ; arbitrary hash table
+  ; state is an association list
+  ; it is assumed to never be mutated
   variant?
-  (initializer get-initializer)
-  (reducer get-reducer)
-  ; (renderer get-renderer)
-  (generator get-generator)
-  (scorer get-scorer)
+  (make-initializer initializer-maker)
+  (make-reducer reducer-maker)
+  ; (renderer renderer-maker)
+  (make-generator generator-maker)
+  (make-scorer scorer-maker)
   (metadata get-metadata))
 
-(define ((no-legal action) state) #f)
+(define ((make-getter maker) variant)
+  ((maker variant) (get-metadata variant)))
+
+(define get-initializer (make-getter initializer-maker))
+(define get-reducer (make-getter reducer-maker))
+(define get-generator (make-getter generator-maker))
+(define get-scorer (make-getter scorer-maker))
+
+(define ((ignore1 x) . args) x)
+(define (ignore2 x) (ignore1 (ignore1 x)))
+
+(define no-legal (ignore2 #f))
 
 (define the-null-variant
   (make-variant
-    (lambda () (make-eq-hash-table))
-    no-legal
-    ; (lambda (state)
-    ;   (begin
-    ;     (display state)
-    ;     (newline)))
-    (lambda (state) '())
-    (lambda (state) 0)
-    '()))
+    (ignore2 '())           ; initializer
+    (ignore1 no-legal)      ; reducer
+    (ignore2 '())           ; generator
+    (ignore2 0)             ; scorer
+    (make-eq-hash-table)))  ; metadata
 
 (define (initial-state variant)
   ((get-initializer variant)))
-
-(define (pretty-state state)
-  (hash-table->alist state))
 
 ; possibly make this variant dependent as well
 (define (render-state variant state)
@@ -48,19 +54,24 @@
 
 (define (perform-action variant state action)
   (let* ((reducer (get-reducer variant))
-         (new-state (reducer state action)))
+         (new-state ((reducer action) state)))
     (if new-state
         (make-outcome "Successful action!" new-state)
         (make-outcome "Illegal action!" state))))
 
 ; build variants
 (define (apply-modifier modifier variant)
-  (let ((initializer (get-initializer variant))
-        (reducer (get-reducer variant))
-        (generator (get-generator variant))
-        (scorer (get-scorer variant))
+  (let ((make-initializer (initializer-maker variant))
+        (make-reducer (reducer-maker variant))
+        (make-generator (generator-maker variant))
+        (make-scorer (scorer-maker variant))
         (metadata (get-metadata variant)))
-    (modifier initializer reducer generator scorer metadata)))
+    (modifier
+      make-initializer
+      make-reducer
+      make-generator
+      make-scorer
+      metadata)))
 
 (define (build-variant . modifiers)
   (build-variant* modifiers))

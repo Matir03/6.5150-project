@@ -1,13 +1,14 @@
 (load "./modifiers.scm")
+; (load "./variant.scm")
 
-(define (get-action)
-  (string->symbol (read-line)))
+(define (ended? state)
+  (assq 'ended state))
 
 (define (play variant)
   (define (action-loop state)
     (render-state variant state)
     (if (not (ended? state))
-      (let* ((action (get-action))
+      (let* ((action (read))
             (outcome (perform-action variant state action))
             (message (get-message outcome))
             (new-state (get-state outcome)))
@@ -18,10 +19,11 @@
 
 (define nim
   (build-variant
-    (players 2)
     nim-stack
+    (players 2)
     finite-game-sum
-    (initialize-nim-game
-      '(3 4 5 6))))
+    (initialize-nim-game '(3 4 5 6))))
 
-(play variant)
+(play nim)
+
+(in 1 (take 2))

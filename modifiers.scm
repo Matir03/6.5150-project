@@ -1,33 +1,27 @@
 (load "./variant.scm")
 
-(define (add-to-all func alist)
-  (lambda args
-    (let (table (apply func args))
-      (for-each
-        (lambda (pair)
-          (hash-table-set! table (car pair) (cdr pair)))
-        alist)
-      table)))
+(define ((prepend pairs) alist)
+  (append pairs alist))
 
-(define (on-slice keys func)
+(define (on-state keys func)
   (lambda (state)
     (define values
-      (map
-        (lambda (key)
-          (hash-table-ref table key))
-        keys))
-    (define new-values
-      (apply func values))
-    (if new-values
-      (begin
-        (for-each
-          (lambda (key value)
-            (hash-table-set! state key value))
-          keys new-values)
-        state)
+      (apply func
+        (map cdr
+          (filter
+            (lambda (entry)
+              (memq (car entry) keys))
+            state))))
+    (if values
+      (append
+        (map cons keys values)
+        (remove
+          (lambda (entry)
+            (memq (car entry) keys))
+          state))
       #f)))
 
-(define (partial case func default)
+(define (on-action case func default)
   (lambda (action)
     (if (eq? (car action) case)
       (apply func (cdr action))
@@ -35,68 +29,127 @@
 
 (define (sequence . funcs)
   (reduce
-    (lambda (f g) (lambda args (f (g args))))
-    (lambda args args)
+    (lambda (f g) (lambda args (f (apply g args))))
+    #f
     funcs))
 
+(define (meta-ref metadata key)
+  ((hash-table-ref metadata key) metadata))
+
 (define (players n)
-  (lambda (initializer reducer generator scorer metadata)
-    (let ((new-initializer
-            (add-to-all initializer '((turn . 0))))
-          (new-metadata
-            `((end-turn .
-                ,(on-slice '(turn)
-                  (lambda (turn)
-                    (list (mod (+ turn 1) n)))))
-              (num-players . ,n)
-              . ,metadata))))
-      (make-variant
-        new-initializer
-        reducer
-        generator
-        scorer
-        new-metadata)))
-
-(define (nim-stack initializer reducer generator scorer metadata)
-  (let ((new-reducer
-          (sequence
-            (partial 'take
-              (lambda (n)
-                (on-slice '(stack-size)
-                  (lambda (stack-size)
-                    (and (integer? n)
-                        (<= n stack-size)
-                        (list (- stack-size n))))))
-              reducer)
-            (cdr (assq 'end-turn metadata))))
-        (new-generator
-          (lambda (state)
-            (map
-              (lambda (n) (list 'take n))
-              (iota (+ (hash-table-ref state 'stack-size) 1)))))
-    (make-variant
-      initializer
-      new-reducer
-      new-generator
-      scorer
-      metadata))))
-
-(define (finite-game-sum initializer reducer generator scorer metadata)
-  (define (new-initializer)
-    (define table (new-eq-hash-table))
-    (hash-table-set! table 'num-games 1)
-    (hash-table-set! table (+ 'game 0) (initializer)))
-  (define new-reducer
-    (partial 'in
-      (lambda (index action)
+  (lambda (make-initializer make-reducer make-generator make-scorer current-metadata)
+    (define (new-make-initializer metadata)
+      (sequence
+        (make-initializer metadata)
+        (prepend '((turn . 0)))))
+    (hash-table-set! current-metadata 'num-players n)
+    (hash-table-set! current-metadata 'get-turn
+      (ignore1
         (lambda (state)
-          ((reducer action)
-            (hash-table-ref state (+ 'game index))))))
-    no-legal)
-  (define (new-generator state)
-    (define num-games (hash-table-ref table 'num-games))
+          (alist-ref 'turn state))))
+    (hash-table-set! current-metadata 'set-turn
+      (ignore1
+        (lambda (turn state)
+          (alist-set 'turn turn state))))
+    (hash-table-set! current-metadata 'end-turn
+      (lambda (metadata)
+        (lambda (state)
+          (let ((turn ((meta-ref metadata 'get-turn) state))
+                (n (hash-table-ref metadata 'num-players))
+                (set-turn (meta-ref metadata 'set-turn)))
+            (set-turn (modulo (+ turn 1) n) state)))))
+    (make-variant
+      new-make-initializer
+      make-reducer
+      make-generator
+      make-scorer
+      current-metadata)))
+
+(define alist-ref (sequence assq cdr))
+(define (alist-set key value alist)
+  (cons (cons key value)
+        (del-assq key alist)))
+
+(define ((gate f) x)
+  (if x (f x) x))
+
+(define (nim-stack make-initializer make-reducer make-generator make-scorer current-metadata)
+  (define (new-make-reducer metadata)
+    (on-action 'take
+      (lambda (n)
+        (sequence
+          (on-state '(stack-size)
+            (lambda (stack-size)
+              (and (integer? n)
+                   (> n 0)
+                   (<= n stack-size)
+                   (list (- stack-size n)))))
+          (gate (meta-ref metadata 'end-turn))))
+      (make-reducer metadata)))
+  (define (new-make-generator metadata)
+    (lambda (state)
+      (map
+        (lambda (n) (list 'take n))
+        (iota (alist-ref state 'stack-size) 1))))
+  (make-variant
+    make-initializer
+    new-make-reducer
+    new-make-generator
+    make-scorer
+    current-metadata))
+
+(define (finite-game-sum make-initializer make-reducer make-generator make-scorer current-metadata)
+  (define ((new-make-initializer metadata))
+    (let ((game ((make-initializer metadata))))
+      `((num-games . 1)
+        (game-0 . (del-assq game 'turn)))))
+  (define base-reducer (make-reducer current-metadata))
+  (define (new-make-reducer metadata)
+    (on-action 'in
+      (lambda (index action)
+        (define game-name (symbol-append 'game- index))
+        (lambda (state)
+          (define game-state
+            ((base-reducer action)
+             (alist-set 'turn ((meta-ref metadata 'get-turn) state)
+               (alist-ref game-name state))))
+          (alist-set
+            game-name
+            (del-assq 'turn game-state)
+            (alist-set 'turn (alist-ref 'turn game-state) state))))
+      no-legal))
+  (define base-generator (make-generator current-metadata))
+  (define ((new-make-generator metadata) state)
     (apply append
       (map
         (lambda (index)
-          (generator (hash-table-ref table (+ 'game index))))
-        (iota num-games)))))
+          (base-generator (alist-ref (symbol-append 'game- index) state)))
+        (iota (alist-ref 'num-games table)))))
+  (define new-metadata (make-eq-hash-table))
+  ((players (hash-table-ref current-metadata 'num-players))
+      new-make-initializer
+      new-make-reducer
+      new-make-generator
+      make-scorer
+      new-metadata))
+
+(define (initialize-to state)
+  (lambda (make-initializer make-reducer make-generator make-scorer current-metadata)
+    (make-variant
+      (ignore2 state)
+      make-reducer
+      make-generator
+      make-scorer
+      current-metadata)))
+
+(define (initialize-nim-game initial-stacks)
+  (initialize-to
+    (append
+      '((num-games . 4)
+        (turn . 0))
+      (map
+        (lambda (stack-size index)
+          (cons (symbol-append 'game- index)
+                `((stack-size . ,stack-size))))
+        initial-stacks
+        (iota (length initial-stacks))))))
