@@ -24,5 +24,3 @@
     (initialize-nim-game '(3 4 5 6))))
 
 (play nim)
-
-(in 1 (take 2))
