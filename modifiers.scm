@@ -71,6 +71,7 @@
 
 (define (adaptive-bot depth which-bot which-player) ; Bot which learns which moves to play depending on which player to watch
   (lambda (make-initializer make-reducer make-generator make-scorer current-metadata)
+    (hash-table-set! current-metadata 'simulation #f)
     (define bot-strength (symbol-append 'bot-strength- which-bot))
     (define (new-make-initializer metadata)
       (lambda () 
@@ -93,7 +94,7 @@
 					 depth))
 					state)
 			((base-reducer action) state)))
-		    ((and (eq? player which-player) (hash-table-ref metadata 'simulation))
+		    ((and (eq? player which-player) (not (hash-table-ref metadata 'simulation)))
 		     (alist-set bot-strength
 				(get-which-move
 				 (make-variant make-initializer make-reducer make-generator make-scorer new-metadata)
