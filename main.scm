@@ -21,7 +21,8 @@
     (players 2)
     nim-stack
     finite-game-sum
-    (initialize-nim-game '(3 4 5 6))))
-
+    (initialize-nim-game '(3 4 5 6))
+    (adaptive-bot 1 0 2)
+    (adaptive-bot 1 1 2)))
 
 (play nim)
