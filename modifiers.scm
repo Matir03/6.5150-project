@@ -1,4 +1,5 @@
 (load "./variant.scm")
+(load "./bots.scm")
 
 (define ((prepend pairs) alist)
   (append pairs alist))
@@ -67,6 +68,48 @@
       make-scorer
       current-metadata)))
 
+(define (get-player metadata)
+  ((hash-table-ref metadata 'get-turn)))
+
+(define (adaptive-bot which-bot which-player) ; Bot which learns which moves to play depending on which player to watch
+  (lambda (make-initializer make-reducer make-generator make-scorer current-metadata)
+    (define bot-strength (symbol-append 'bot-strength- which-bot))
+    (define (new-make-initializer metadata)
+      (lambda () 
+	(let ((game ((make-initializer metadata))))
+	    (append (list `(,bot-strength . ,0)) game))))
+    (hash-table-set!  current-metadata (symbol-append 'bot-strength- which-bot) 0)
+    (define base-reducer (make-reducer current-metadata))
+    (define (new-make-reducer metadata)
+      (lambda (action)
+	(lambda (state)
+	  (pp state)
+	  (pp action)
+	    (let ((player ((get-player metadata) state)))
+	      (pp player)
+	      (pp which-bot)
+	      (pp "pe")
+	      (cond ((eq? player which-bot)
+		     (if (eq? action 'bot-move)
+			((base-reducer (get-nth-best-move (make-variant make-initializer make-reducer make-generator make-scorer current-metadata) state
+							(alist-ref bot-strength state)) state))
+			((base-reducer action) state)))
+		    ((eq? player which-player)
+		     (alist-set bot-strength
+				(get-which-move
+				 (make-variant make-initializer make-reducer make-generator make-scorer current-metadata)
+				 state action)
+				state)
+		     ((base-reducer action) state))
+		    (else ((base-reducer action) state)))))))
+      
+      (make-variant
+        new-make-initializer
+        new-make-reducer
+	make-generator ;; We do not edit the generator since we don't want bot-moves to show up
+        make-scorer
+        current-metadata)))
+
 (define alist-ref (sequence assq cdr))
 (define (alist-set key value alist)
   (cons (cons key value)
@@ -92,12 +135,15 @@
     (lambda (state)
       (map
         (lambda (n) (list 'take n))
-        (iota (alist-ref state 'stack-size) 1))))
+        (iota (alist-ref 'stack-size state) 1))))
+  (define (new-make-scorer metadata)
+    (lambda (state)
+      (alist-ref 'stack-size state)))
   (make-variant
     make-initializer
     new-make-reducer
     new-make-generator
-    make-scorer
+    new-make-scorer
     current-metadata))
 
 (define (finite-game-sum make-initializer make-reducer make-generator make-scorer current-metadata)
@@ -129,7 +175,10 @@
       (map
         (lambda (index)
           (base-generator (alist-ref (symbol-append 'game- index) state)))
-        (iota (alist-ref 'num-games table)))))
+        (iota (alist-ref 'num-games state)))))
+  (define base-scorer (make-scorer current-metadata))
+  (define ((new-make-scorer metadata) state)
+    (+ (map (lambda (index) (alist-ref (symbol-append 'game- index) state)) (iota (alist-ref 'num-games state)))))
   (define new-metadata (make-eq-hash-table))
   ((players (hash-table-ref current-metadata 'num-players))
       new-make-initializer
