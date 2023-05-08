@@ -89,8 +89,11 @@
 	      (pp "pe")
 	      (cond ((eq? player which-bot)
 		     (if (eq? action 'bot-move)
-			((base-reducer (get-nth-best-move (make-variant make-initializer make-reducer make-generator make-scorer current-metadata) state
-							(alist-ref bot-strength state)) state))
+			 ((base-reducer (get-nth-best-move
+					 (make-variant make-initializer make-reducer make-generator make-scorer current-metadata)
+					 state
+					 (alist-ref bot-strength state)))
+					state)
 			((base-reducer action) state)))
 		    ((eq? player which-player)
 		     (alist-set bot-strength

@@ -47,7 +47,6 @@
     (if (= depth 0)
 	(get-score variant state maximizing-player)
 	(let ((possible-action-states (generate-moves-and-states variant state)))
-	  (pp "MAde it here")
 	  (reduce (if is-maximizing-player max-with-inf min-with-inf)
 		  '-inf
 		  (map (lambda (possible-action-state)
@@ -85,9 +84,6 @@
 (define (get-which-move variant state action)
   (let* ((actions-values (sort-action-values (get-move-pairs variant state (get-player-count variant))))
 	 (actions (map car actions-values)))
-    (pp actions)
-    (pp action)
-    (pp (member action actions))
     (- (length actions) (length (member action actions)))))
 
 
@@ -100,20 +96,15 @@
 (define (get-nth-best-move-multiplayer variant state depth n)
   (let* ((actions-values (sort-action-values (get-move-pairs variant state (get-player-count variant))))
 	 (actions (map car actions-values)))
-    (pp 10)
-    (pp actions)
     (if (<= (length actions) n)
 	(list-ref actions 0)
 	(list-ref actions n))))
 		
 (define (get-best-move variant state)
-  (pp "Getting best move")
   (get-best-move-multiplayer variant state (get-player-count variant)))
 
 (define (get-nth-best-move variant state n)
-  (pp "Getting nth best move")
-  (get-nth-best-move-multiplayer variant state (get-player-count variant) n)
-  (pp "returned"))
+  (get-nth-best-move-multiplayer variant state (get-player-count variant) n))
 
 (define (get-score variant state maximizing-player)
   (let* ((score-getter (get-scorer variant)))
