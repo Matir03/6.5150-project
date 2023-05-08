@@ -81,12 +81,7 @@
     (define (new-make-reducer metadata)
       (lambda (action)
 	(lambda (state)
-	  (pp state)
-	  (pp action)
 	    (let ((player ((get-player metadata) state)))
-	      (pp player)
-	      (pp which-bot)
-	      (pp "pe")
 	      (cond ((eq? player which-bot)
 		     (if (eq? action 'bot-move)
 			 ((base-reducer (get-nth-best-move

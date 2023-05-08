@@ -44,10 +44,6 @@
 ;;  (get-best-move-min-max variant state 3))
 (define (get-score-multiplayer-internal variant state action depth maximizing-player)
   (let ((is-maximizing-player (is-maximizing-player? maximizing-player state variant)))
-    (pp is-maximizing-player)
-    (pp maximizing-player)
-    (pp state)
-    (pp depth)
     (if (= depth 0)
 	(get-score variant state maximizing-player)
 	(let ((possible-action-states (generate-moves-and-states variant state)))
@@ -78,7 +74,6 @@
 	     (actions-values (map (lambda (action-state score)
 				    (list (car action-state) score))
 				  possible-actions-states scores)))
-	(pp actions-values)
 	actions-values)))
 
 (define (sort-action-values action-values)
@@ -131,41 +126,3 @@
 	((eq? b '-inf) b)
 	((eq? b 'inf) a)
 	(else (min a b))))
-
-#|(define (get-best-move-min-max variant state depth)
-  (if (< depth 1)
-      (error "cannot get a best move with depth < 1")
-      (let* ((possible-actions-states (generate-moves-and-states variant state))
-	     (scores (map (lambda (action-state-pair)
-			    (get-score-min-max-internal variant
-					       (cadr action-state-pair)
-					       (- depth 1) #f))
-			  possible-actions-states))
-	     (actions-values (map (lambda (action-state score)
-				    (cons (car action-state) score))
-				  possible-actions-states scores)))
-	(if (pair? possible-actions-states)
-	    (car (fold-right max-with-inf-and-values '('test '-inf) actions-values))
-	    (error "No moves can be made")))))
-	    |#
-
-#|
-;; Return just the score of the move given state
-(define (get-score-min-max-internal variant state depth maximizing-player)
-  ;; First step is to generate all the legal moves
-  (if (= depth 0)
-      (get-score variant state)
-      (let ((possible-states (generate-states variant state)))
-	(if (pair? possible-states)
-	    (case maximizing-player
-	      (#t (fold-right max-with-inf '-inf
-			      (map (lambda (new-state) (get-score-min-max-internal
-							variant new-state (- depth 1) #f))
-				   possible-states)))
-	      (#f (fold-right min-with-inf 'inf
-			      (map (lambda (new-state) (get-score-min-max-internal
-							variant new-state (- depth 1) #t))
-				   possible-states))))
-	    (get-score variant state)))))
-
-|#
