@@ -79,22 +79,24 @@
     (hash-table-set!  current-metadata (symbol-append 'bot-strength- which-bot) 0)
     (define base-reducer (make-reducer current-metadata))
     (define (new-make-reducer metadata)
+      (define new-metadata (copy-hash-table metadata))
+      (hash-table-set! new-metadata 'simulation #t)
       (lambda (action)
 	(lambda (state)
 	    (let ((player ((get-player metadata) state)))
 	      (cond ((eq? player which-bot)
 		     (if (eq? action 'bot-move)
 			 ((base-reducer (get-nth-best-move
-					 (make-variant make-initializer make-reducer make-generator make-scorer current-metadata)
+					 (make-variant make-initializer make-reducer make-generator make-scorer new-metadata)
 					 state
 					 (alist-ref bot-strength state)
 					 depth))
 					state)
 			((base-reducer action) state)))
-		    ((eq? player which-player)
+		    ((and (eq? player which-player) (hash-table-ref metadata 'simulation))
 		     (alist-set bot-strength
 				(get-which-move
-				 (make-variant make-initializer make-reducer make-generator make-scorer current-metadata)
+				 (make-variant make-initializer make-reducer make-generator make-scorer new-metadata)
 				 state action
 				 depth)
 				state)
