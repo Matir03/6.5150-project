@@ -180,7 +180,7 @@
   (define ((new-make-scorer metadata) state player)
     (define (get-last-player state) (alist-ref 'last-player state))
     (let ((remaining-sticks
-	   (apply + (map (lambda (index)
+	   (apply fix:xor (map (lambda (index)
 		     (base-scorer
 		      (alist-ref (symbol-append 'game- index) state)
 		      player))
