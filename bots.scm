@@ -86,8 +86,8 @@
 				((eq? (cadr b) 'inf) #f)
 				(else (> (cadr a) (cadr b)))))))
 
-(define (get-which-move variant state action)
-  (let* ((actions-values (sort-action-values (get-move-pairs variant state (get-player-count variant))))
+(define (get-which-move variant state action depth)
+  (let* ((actions-values (sort-action-values (get-move-pairs variant state (* depth (get-player-count variant)))))
 	 (actions (map car actions-values)))
     (- (length actions) (length (member action actions)))))
 
@@ -105,11 +105,11 @@
 	(list-ref actions 0)
 	(list-ref actions n))))
 		
-(define (get-best-move variant state)
-  (get-best-move-multiplayer variant state (get-player-count variant)))
+(define (get-best-move variant state depth)
+  (get-best-move-multiplayer variant state (* depth (get-player-count variant))))
 
-(define (get-nth-best-move variant state n)
-  (get-nth-best-move-multiplayer variant state (get-player-count variant) n))
+(define (get-nth-best-move variant state n depth)
+  (get-nth-best-move-multiplayer variant state (* depth (get-player-count variant)) n))
 
 (define (get-score variant state maximizing-player)
   (let* ((score-getter (get-scorer variant)))
