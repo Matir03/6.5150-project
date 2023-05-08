@@ -36,9 +36,16 @@
 
 (define (get-player-count x) 2)
 
+(define (get-player metadata)
+  ((hash-table-ref metadata 'get-turn)))
+
+(define (is-maximizing-player? player state variant)
+  (let ((metadata (get-metadata variant)))
+    (eq? ((get-player metadata) state) player)))
+
 ;;  (get-best-move-min-max variant state 3))
 (define (get-score-multiplayer-internal variant state action depth maximizing-player)
-  (let ((is-maximizing-player (is-maximizing-player? maximizing-player state)))
+  (let ((is-maximizing-player (is-maximizing-player? maximizing-player state variant)))
     (if (= depth 0)
 	(get-score variant state action is-maximizing-player)
 	(let ((possible-action-states (generate-moves-and-states variant state)))
@@ -46,7 +53,10 @@
 	  (reduce (if is-maximizing-player max-with-inf min-with-inf)
 		  (get-score variant '() action is-maximizing-player)
 		  (map (lambda (possible-action-state)
-			(get-score-multiplayer-internal variant (cadr possible-action-state) (car possible-action-state) (- depth 1) maximizing-player))
+			 (get-score-multiplayer-internal
+			  variant (cadr possible-action-state)
+			  (car possible-action-state) (- depth 1)
+			  maximizing-player))
 		    possible-action-states))))))
 
 

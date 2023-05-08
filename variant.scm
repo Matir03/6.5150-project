@@ -4,7 +4,7 @@
     make-reducer     ; (metadata) => (action) => (state) => state | #f ; (if the action fails)
     make-generator   ; (metadata) => (state) => list action
     ; make-renderer  ; (metadata) => (state) => renders state
-    make-scorer      ; (metadata) => (state) => score
+    make-scorer      ; (metadata) => (state player) => score
     metadata)   ; arbitrary hash table
   ; state is an association list
   ; it is assumed to never be mutated

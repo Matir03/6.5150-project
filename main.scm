@@ -18,6 +18,7 @@
 
 (define nim
   (build-variant
+    (adaptive-bot 0 1)
     nim-stack
     (players 2)
     finite-game-sum

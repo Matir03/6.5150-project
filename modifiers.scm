@@ -68,8 +68,6 @@
       make-scorer
       current-metadata)))
 
-(define (get-player metadata)
-  ((hash-table-ref metadata 'get-turn)))
 
 (define (adaptive-bot which-bot which-player) ; Bot which learns which moves to play depending on which player to watch
   (lambda (make-initializer make-reducer make-generator make-scorer current-metadata)
@@ -174,7 +172,7 @@
     (apply append
       (map
         (lambda (index)
-          (base-generator (alist-ref (symbol-append 'game- index) state)))
+          (map (lambda (turn) `(in ,index ,turn)) (base-generator (alist-ref (symbol-append 'game- index) state))))
         (iota (alist-ref 'num-games state)))))
   (define base-scorer (make-scorer current-metadata))
   (define ((new-make-scorer metadata) state)
