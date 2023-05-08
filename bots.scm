@@ -101,7 +101,6 @@
 (define (get-nth-best-move-multiplayer variant state depth n)
   (let* ((actions-values (sort-action-values (get-move-pairs variant state (get-player-count variant))))
 	 (actions (map car actions-values)))
-    (pp actions-values)
     (if (<= (length actions) n)
 	(list-ref actions 0)
 	(list-ref actions n))))

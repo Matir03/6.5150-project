@@ -119,6 +119,7 @@
   (and x (f x)))
 
 (define (nim-stack make-initializer make-reducer make-generator make-scorer current-metadata)
+  (hash-table-set! current-metadata 'finite-game-combiner fix:xor)
   (define (new-make-reducer metadata)
     (on-action 'take 2
       (lambda (n)
@@ -178,9 +179,10 @@
         (iota (alist-ref 'num-games state)))))
   (define base-scorer (make-scorer current-metadata))
   (define ((new-make-scorer metadata) state player)
+    (define combiner (hash-table-ref metadata 'finite-game-combiner))
     (define (get-last-player state) (alist-ref 'last-player state))
     (let ((remaining-sticks
-	   (apply fix:xor (map (lambda (index)
+	   (apply combiner (map (lambda (index)
 		     (base-scorer
 		      (alist-ref (symbol-append 'game- index) state)
 		      player))
@@ -188,13 +190,12 @@
       (if (= remaining-sticks 0)
 	  (if (eq? (get-last-player state) player) 'inf '-inf)
 	  remaining-sticks)))
-  (define new-metadata (make-eq-hash-table))
   ((players (hash-table-ref current-metadata 'num-players))
       new-make-initializer
       new-make-reducer
       new-make-generator
       new-make-scorer
-      new-metadata))
+      current-metadata))
 
 (define (initialize-to state)
   (lambda (make-initializer make-reducer make-generator make-scorer current-metadata)
