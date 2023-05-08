@@ -44,6 +44,10 @@
 ;;  (get-best-move-min-max variant state 3))
 (define (get-score-multiplayer-internal variant state action depth maximizing-player)
   (let ((is-maximizing-player (is-maximizing-player? maximizing-player state variant)))
+    (pp is-maximizing-player)
+    (pp maximizing-player)
+    (pp state)
+    (pp depth)
     (if (= depth 0)
 	(get-score variant state maximizing-player)
 	(let ((possible-action-states (generate-moves-and-states variant state)))
@@ -51,8 +55,10 @@
 		  '-inf
 		  (map (lambda (possible-action-state)
 			 (get-score-multiplayer-internal
-			  variant (cadr possible-action-state)
-			  (car possible-action-state) (- depth 1)
+			  variant
+			  (cadr possible-action-state)
+			  (car possible-action-state)
+			  (- depth 1)
 			  maximizing-player))
 		    possible-action-states))))))
 
@@ -60,17 +66,19 @@
 (define (get-move-pairs variant state depth)
   (if (< depth 1)
       (error "cannot get a best move with depth < 1")
-      (let* ((possible-actions-states (generate-moves-and-states variant state))
+      (let* ((maximizing-player ((get-player (get-metadata variant)) state))
+	     (possible-actions-states (generate-moves-and-states variant state))
 	     (scores (map (lambda (action-state-pair)
 			    (get-score-multiplayer-internal variant
 					       (cadr action-state-pair)
 					       (car action-state-pair)
 					       (- depth 1)
-					       ((get-player (get-metadata variant)) (cadr action-state-pair))))
+					       maximizing-player))
 			  possible-actions-states))
 	     (actions-values (map (lambda (action-state score)
 				    (list (car action-state) score))
 				  possible-actions-states scores)))
+	(pp actions-values)
 	actions-values)))
 
 (define (sort-action-values action-values)
