@@ -32,7 +32,9 @@
 	((eq? (cadr b) 'inf) b)
 	(else (if (> (cadr a) (cadr b)) a b))))
 
-(define (get-player-count x) 2)
+(define (get-player-count variant)
+  (let ((metadata (get-metadata variant)))
+    (hash-table-ref metadata 'num-players)))
 
 (define (get-player metadata)
   ((hash-table-ref metadata 'get-turn)))
