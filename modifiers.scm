@@ -146,7 +146,7 @@
   (define ((new-make-initializer metadata))
     (let ((game ((make-initializer metadata))))
       `((num-games . 1)
-        (game-0 . (del-assq game 'turn)))))
+        (game-0 . ,(del-assq game 'turn)))))
   (define base-reducer (make-reducer current-metadata))
   (define (new-make-reducer metadata)
     (on-action 'in 3
