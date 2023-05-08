@@ -12,7 +12,6 @@
 ; Returns a list of (state . move)
 (define (generate-states variant state)
   (let* ((generator (get-generator variant))
-	 (reducer (get-reducer variant))
 	 (possible-actions (generator state))
 	 (possible-states (map (lambda (action) (unsafe-perform-action variant (alist-copy state) action))
 			       possible-actions)))
@@ -20,7 +19,6 @@
 
 (define (generate-moves-and-states variant state)
   (let* ((action-generator (get-generator variant))
-	 (reducer (get-reducer variant))
 	 (possible-actions (action-generator state))
 	 (possible-states (map (lambda (action) (unsafe-perform-action variant (alist-copy state) action))
 			       possible-actions))
@@ -47,11 +45,11 @@
 (define (get-score-multiplayer-internal variant state action depth maximizing-player)
   (let ((is-maximizing-player (is-maximizing-player? maximizing-player state variant)))
     (if (= depth 0)
-	(get-score variant state action is-maximizing-player)
+	(get-score variant state maximizing-player)
 	(let ((possible-action-states (generate-moves-and-states variant state)))
 	  (pp "MAde it here")
 	  (reduce (if is-maximizing-player max-with-inf min-with-inf)
-		  (get-score variant '() action is-maximizing-player)
+		  '-inf
 		  (map (lambda (possible-action-state)
 			 (get-score-multiplayer-internal
 			  variant (cadr possible-action-state)
@@ -87,7 +85,10 @@
 (define (get-which-move variant state action)
   (let* ((actions-values (sort-action-values (get-move-pairs variant state (get-player-count variant))))
 	 (actions (map car actions-values)))
-    (- (length actions) (length (memq action actions)))))
+    (pp actions)
+    (pp action)
+    (pp (member action actions))
+    (- (length actions) (length (member action actions)))))
 
 
 (define (get-best-move-multiplayer variant state depth)
@@ -114,10 +115,9 @@
   (get-nth-best-move-multiplayer variant state (get-player-count variant) n)
   (pp "returned"))
 
-(define (get-score variant state action is-maximizing-player)
+(define (get-score variant state maximizing-player)
   (let* ((score-getter (get-scorer variant)))
-    (pp state)
-    (score-getter state action is-maximizing-player)))
+    (score-getter  state maximizing-player)))
 
 (define (max-with-inf a b)
   (cond ((eq? a '-inf) b)

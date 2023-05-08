@@ -135,7 +135,7 @@
         (lambda (n) (list 'take n))
         (iota (alist-ref 'stack-size state) 1))))
   (define (new-make-scorer metadata)
-    (lambda (state)
+    (lambda (state player)
       (alist-ref 'stack-size state)))
   (make-variant
     make-initializer
@@ -156,10 +156,10 @@
         (define game-name (symbol-append 'game- index))
         (lambda (state)
           (and (assq game-name state)
-            (let ((game-state
-                    ((base-reducer action)
-                     (alist-set 'turn ((meta-ref metadata 'get-turn) state)
-                       (alist-ref game-name state)))))
+               (let* ((state (alist-set 'last-player ((meta-ref metadata 'get-turn) state) state))
+		      (game-state ((base-reducer action)
+			       (alist-set 'turn ((meta-ref metadata 'get-turn) state)
+					  (alist-ref game-name state)))))
 
               (and game-state
                 (alist-set
@@ -175,14 +175,23 @@
           (map (lambda (turn) `(in ,index ,turn)) (base-generator (alist-ref (symbol-append 'game- index) state))))
         (iota (alist-ref 'num-games state)))))
   (define base-scorer (make-scorer current-metadata))
-  (define ((new-make-scorer metadata) state)
-    (+ (map (lambda (index) (alist-ref (symbol-append 'game- index) state)) (iota (alist-ref 'num-games state)))))
+  (define ((new-make-scorer metadata) state player)
+    (define (get-last-player state) (alist-ref 'last-player state))
+    (let ((remaining-sticks
+	   (apply + (map (lambda (index)
+		     (base-scorer
+		      (alist-ref (symbol-append 'game- index) state)
+		      player))
+		   (iota (alist-ref 'num-games state))))))
+      (if (= remaining-sticks 0)
+	  (if (eq? (get-last-player state) player) 'inf '-inf)
+	  remaining-sticks)))
   (define new-metadata (make-eq-hash-table))
   ((players (hash-table-ref current-metadata 'num-players))
       new-make-initializer
       new-make-reducer
       new-make-generator
-      make-scorer
+      new-make-scorer
       new-metadata))
 
 (define (initialize-to state)
