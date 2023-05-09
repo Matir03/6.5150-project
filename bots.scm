@@ -43,25 +43,43 @@
   (let ((metadata (get-metadata variant)))
     (eq? ((get-player metadata) state) player)))
 
+(define (get-is-promising variant)
+  (let ((metadata (get-metadata variant)))
+    (hash-table-ref metadata 'is-promising)))
+
+(define (get-update-search-data variant)
+  (let ((metadata (get-metadata variant)))
+    (hash-table-ref metadata 'update-search-data)))
+
+(define (get-move-decider variant)
+  (let ((metadata (get-metadata variant)))
+    (hash-table-ref metadata 'move-decider)))
+
 ;;  (get-best-move-min-max variant state 3))
-(define (get-score-multiplayer-internal variant state action depth maximizing-player)
+(define (get-score-multiplayer-internal variant state action depth maximizing-player search-data)
+  (define is-promising (get-is-promising variant))
+  (define move-decider (get-move-decider variant))
+  (define update-search-data (get-update-search-data variant))
   (let ((is-maximizing-player (is-maximizing-player? maximizing-player state variant)))
     (if (= depth 0)
 	(get-score variant state maximizing-player)
 	(let ((possible-action-states (generate-moves-and-states variant state)))
-	  (reduce (if is-maximizing-player max-with-inf min-with-inf)
-		  '-inf
+	  (reduce (move-decider variant state action maximizing-player)
+	          (get-score variant state maximizing-player)
 		  (map (lambda (possible-action-state)
-			 (get-score-multiplayer-internal
-			  variant
-			  (cadr possible-action-state)
-			  (car possible-action-state)
-			  (- depth 1)
-			  maximizing-player))
+			 (if (is-promising search-data (cadr possible-action-state) (car possible-action-state))
+			    (update-search-data (get-score-multiplayer-internal
+				variant
+				(cadr possible-action-state)
+				(car possible-action-state)
+				(- depth 1)
+				maximizing-player
+				search-data) search-data)))
 		    possible-action-states))))))
 
 
 (define (get-move-pairs variant state depth)
+  (define search-data (make-eq-hash-table))
   (if (< depth 1)
       (error "cannot get a best move with depth < 1")
       (let* ((maximizing-player ((get-player (get-metadata variant)) state))
@@ -71,7 +89,8 @@
 					       (cadr action-state-pair)
 					       (car action-state-pair)
 					       (- depth 1)
-					       maximizing-player))
+					       maximizing-player
+					       search-data))
 			  possible-actions-states))
 	     (actions-values (map (lambda (action-state score)
 				    (list (car action-state) score))

@@ -22,7 +22,7 @@
     (players 2)
     finite-game-sum
     (initialize-nim-game '(3 4 5 6))
-    (adaptive-bot 1 0 2)
-    (adaptive-bot 1 1 2)))
+    (adaptive-paranoid-bot 1 0 1)))
 
 (play nim)
+

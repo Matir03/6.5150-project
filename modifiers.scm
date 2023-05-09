@@ -69,8 +69,12 @@
       current-metadata)))
 
 
-(define (adaptive-bot depth which-bot which-player) ; Bot which learns which moves to play depending on which player to watch
+(define (adaptive-paranoid-bot depth which-bot which-player) ; Bot which learns which moves to play depending on which player to watch
   (lambda (make-initializer make-reducer make-generator make-scorer current-metadata)
+    (hash-table-set! current-metadata 'is-promising (lambda args #t))
+    (hash-table-set! current-metadata 'update-search-data (lambda (score search-data) score))
+    (hash-table-set! current-metadata 'move-decider (lambda (variant state action maximizing-player)
+							(if (is-maximizing-player? maximizing-player state variant) max-with-inf min-with-inf)))
     (hash-table-set! current-metadata 'simulation #f)
     (define bot-strength (symbol-append 'bot-strength- which-bot))
     (define (new-make-initializer metadata)
