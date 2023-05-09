@@ -74,7 +74,7 @@
     (hash-table-set! current-metadata 'simulation #f)
     (define bot-strength (symbol-append 'bot-strength- which-bot))
     (define (new-make-initializer metadata)
-      (lambda () 
+      (lambda ()
 	(let ((game ((make-initializer metadata))))
 	    (append (list `(,bot-strength . ,0)) game))))
     (hash-table-set!  current-metadata (symbol-append 'bot-strength- which-bot) 0)
@@ -107,7 +107,7 @@
 				state)
 		     ((base-reducer action) state))
 		    (else ((base-reducer action) state)))))))
-      
+
       (make-variant
         new-make-initializer
         new-make-reducer
@@ -214,7 +214,7 @@
 (define (initialize-nim-game initial-stacks)
   (initialize-to
     (append
-      '((num-games . 4)
+      `((num-games . ,(length initial-stacks))
         (turn . 0))
       (map
         (lambda (stack-size index)

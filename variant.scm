@@ -11,7 +11,6 @@
   variant?
   (make-initializer initializer-maker)
   (make-reducer reducer-maker)
-  ; (renderer renderer-maker)
   (make-generator generator-maker)
   (make-scorer scorer-maker)
   (metadata get-metadata))
