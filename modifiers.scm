@@ -81,11 +81,12 @@
     (define base-reducer (make-reducer current-metadata))
     (define (new-make-reducer metadata)
       (define new-metadata (copy-hash-table metadata))
-      (hash-table-set! new-metadata 'simulation #t)
-	(hash-table-set! new-metadata 'is-promising (lambda args #t))
-	(hash-table-set! new-metadata 'update-search-data (lambda (score search-data) score))
-	(hash-table-set! new-metadata 'move-decider (lambda (variant state action maximizing-player)
-							    (if (is-maximizing-player? maximizing-player state variant) max-with-inf min-with-inf)))
+      (generic-bot-builder (lambda args #t)
+			   (lambda (score search-data) score)
+			   (lambda (variant state action maximizing-player)
+			     (if (is-maximizing-player? maximizing-player state variant)
+				 max-with-inf min-with-inf))
+			   new-metadata)
       (lambda (action)
 	(lambda (state)
 	    (let ((player ((get-player metadata) state)))
@@ -99,8 +100,7 @@
 					state)
 			((base-reducer action) state)))
 		    ((and (eq? player which-player) (not (hash-table-ref metadata 'simulation)))
-		     (alist-set bot-strength
-				(get-which-move
+		     (alist-set bot-strength (get-which-move
 				 (make-variant make-initializer make-reducer make-generator make-scorer new-metadata)
 				 state action
 				 depth)

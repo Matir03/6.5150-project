@@ -73,6 +73,11 @@
 				search-data) search-data)))
 		    possible-action-states))))))
 
+(define (generic-bot-builder is-promising update-search-data move-decider metadata)
+    (hash-table-set! metadata 'simulation #t)
+    (hash-table-set! metadata 'is-promising is-promising)
+    (hash-table-set! metadata 'update-search-data update-search-data)
+    (hash-table-set! metadata 'move-decider move-decider))
 
 (define (get-move-pairs variant state depth)
   (define search-data (make-eq-hash-table))
