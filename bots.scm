@@ -25,13 +25,6 @@
 	 (possible-actions-states (map list possible-actions possible-states)))
     (filter cadr possible-actions-states))) ; Filter out states which are #f
 
-(define (max-with-inf-and-values a b)
-  (cond ((eq? (cadr a) '-inf) b)
-	((eq? (cadr a) 'inf) a)
-	((eq? (cadr b) '-inf) a)
-	((eq? (cadr b) 'inf) b)
-	(else (if (> (cadr a) (cadr b)) a b))))
-
 (define (get-player-count variant)
   (let ((metadata (get-metadata variant)))
     (hash-table-ref metadata 'num-players)))
@@ -108,17 +101,12 @@
   (define maximizing-player ((get-player (get-metadata variant)) state))
   (define move-decider (get-move-decider variant))
   (define move-picker (convert-to-move-picker (move-decider variant state '() maximizing-player)))
-  (let* ((actions-values ((sort-action-values to-move-picker)
+  (let* ((actions-values ((sort-action-values move-picker)
 			  (get-move-pairs variant state (* depth (get-player-count variant)))))
 	 (actions (map car actions-values)))
+    (pp actions)
+    (pp action)
     (- (length actions) (length (member action actions)))))
-
-
-(define (get-best-move-multiplayer variant state depth)
-  (let ((actions-values (get-move-pairs variant state depth)))
-    (if (pair? actions-values)
-	(car (reduce max-with-inf-and-values '(test -inf) actions-values))
-	(error "No moves can be made"))))
 
 (define (get-nth-best-move-multiplayer variant state depth n)
   (define maximizing-player ((get-player (get-metadata variant)) state))
@@ -130,9 +118,6 @@
 	(list-ref actions 0)
 	(list-ref actions n))))
 		
-(define (get-best-move variant state depth)
-  (get-best-move-multiplayer variant state (* depth (get-player-count variant))))
-
 (define (get-nth-best-move variant state n depth)
   (get-nth-best-move-multiplayer variant state (* depth (get-player-count variant)) n))
 
