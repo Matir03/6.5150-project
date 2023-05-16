@@ -77,3 +77,6 @@
 
 (define (build-variant* modifiers)
   (fold apply-modifier the-null-variant modifiers))
+
+(define (ended? state)
+  (assq 'ended state))

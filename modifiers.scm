@@ -115,10 +115,11 @@
         make-scorer
         current-metadata)))
 
-(define alist-ref (sequence assq cdr))
+(define alist-ref (sequence assoc cdr))
+
 (define (alist-set key value alist)
   (cons (cons key value)
-        (del-assq key alist)))
+        (del-assoc key alist)))
 
 (define ((gate f) x)
   (and x (f x)))
@@ -167,8 +168,7 @@
                (let* ((state (alist-set 'last-player ((meta-ref metadata 'get-turn) state) state))
 		      (game-state ((base-reducer action)
 			       (alist-set 'turn ((meta-ref metadata 'get-turn) state)
-					  (alist-ref game-name state)))))
-
+                (alist-ref game-name state)))))
               (and game-state
                 (alist-set
                   game-name
@@ -177,11 +177,11 @@
       no-legal))
   (define base-generator (make-generator current-metadata))
   (define ((new-make-generator metadata) state)
-    (apply append
-      (map
-        (lambda (index)
-          (map (lambda (turn) `(in ,index ,turn)) (base-generator (alist-ref (symbol-append 'game- index) state))))
-        (iota (alist-ref 'num-games state)))))
+    (append-map
+      (lambda (index)
+        (map (lambda (turn) `(in ,index ,turn))
+             (base-generator (alist-ref (symbol-append 'game- index) state))))
+      (iota (alist-ref 'num-games state))))
   (define base-scorer (make-scorer current-metadata))
   (define ((new-make-scorer metadata) state player)
     (define combiner (hash-table-ref metadata 'finite-game-combiner))
@@ -201,6 +201,30 @@
       new-make-generator
       new-make-scorer
       current-metadata))
+
+(define (progressive make-initializer make-reducer make-generator make-scorer current-metadata)
+  (define ((new-make-initializer metadata))
+    (let ((game ((make-initializer metadata))))
+      `((move . 0) (sub-move . 0) . ,game)))
+  (define base-end-turn
+    (hash-table-ref current-metadata 'end-turn))
+  (hash-table-set! current-metadata 'end-turn
+    (lambda (metadata)
+      (lambda (state)
+        (display state)
+        (let ((move (alist-ref 'move state))
+              (sub-move (alist-ref 'sub-move state)))
+          (if (< sub-move move)
+            (alist-set 'sub-move (+ sub-move 1) state)
+            (alist-set 'move (+ move 1)
+              (alist-set 'sub-move 0
+                ((base-end-turn metadata) state))))))))
+  (make-variant
+    new-make-initializer
+    make-reducer
+    make-generator
+    make-scorer
+    current-metadata))
 
 (define (initialize-to state)
   (lambda (make-initializer make-reducer make-generator make-scorer current-metadata)

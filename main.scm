@@ -20,6 +20,7 @@
     (initialize-nim-game '(3 4 5 6))
     (adaptive-paranoid-bot 1 0 1)))
 
+#|
 (play nim)
 
 bot-move
@@ -28,3 +29,10 @@ bot-move
 (in 1 (take 3))
 bot-move
 (in 0 (take 1))
+|#
+
+(load "./chess.scm")
+
+(play chess)
+
+(move (1 . 0) (0 . 2))
