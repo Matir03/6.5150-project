@@ -100,12 +100,12 @@
 					state)
 			((base-reducer action) state)))
 		    ((and (eq? player which-player) (not (hash-table-ref metadata 'simulation)))
-		     (alist-set bot-strength (get-which-move
+		     (let ((state (alist-set bot-strength (get-which-move
 				 (make-variant make-initializer make-reducer make-generator make-scorer new-metadata)
 				 state action
 				 depth)
-				state)
-		     ((base-reducer action) state))
+				state)))
+		     ((base-reducer action) state)))
 		    (else ((base-reducer action) state)))))))
 
       (make-variant
@@ -124,7 +124,7 @@
   (and x (f x)))
 
 (define (nim-stack make-initializer make-reducer make-generator make-scorer current-metadata)
-  (hash-table-set! current-metadata 'finite-game-combiner fix:xor)
+  (hash-table-set! current-metadata 'finite-game-combiner +)
   (define (new-make-reducer metadata)
     (on-action 'take 2
       (lambda (n)
