@@ -1,19 +1,15 @@
 (load "./modifiers.scm")
 
-(define (ended? state)
-  (assq 'ended state))
-
 (define (play variant)
   (define (action-loop state)
     (render-state variant state)
-    (if (not (ended? state))
-      (let* ((action (read))
-            (outcome (perform-action variant state action))
-            (message (get-message outcome))
-            (new-state (get-state outcome)))
-        (display message)
-        (newline)
-        (action-loop new-state))))
+    (let* ((action (read))
+          (outcome (perform-action variant state action))
+          (message (get-message outcome))
+          (new-state (get-state outcome)))
+      (display message)
+      (newline)
+      (action-loop new-state)))
   (action-loop (initial-state variant)))
 
 (define nim
@@ -24,5 +20,19 @@
     (initialize-nim-game '(3 4 5 6))
     (adaptive-paranoid-bot 1 0 1)))
 
+#|
 (play nim)
 
+bot-move
+(in 0 (take 2))
+bot-move
+(in 1 (take 3))
+bot-move
+(in 0 (take 1))
+|#
+
+(load "./chess.scm")
+
+(play chess)
+
+(move (1 . 0) (0 . 2))
